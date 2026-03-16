@@ -1,8 +1,100 @@
 generator client {
- provider = "prisma-client-js"
+  provider = "prisma-client-js"
 }
 
 datasource db {
- provider = "postgresql"
- url      = env("DATABASE_URL")
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            Int      @id @default(autoincrement())
+  displayName   String
+  passwordHash  String
+  role          String   @default("user")
+
+  posts         Post[]
+  replies       Reply[]
+  votes         Vote[]
+  channels      Channel[] @relation("UserChannels")
+
+  createdAt     DateTime @default(now())
+}
+
+model Channel {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  description String?
+  createdBy   Int
+  createdAt   DateTime @default(now())
+
+  creator     User     @relation("UserChannels", fields: [createdBy], references: [id])
+
+  posts       Post[]
+}
+
+model Post {
+  id         Int      @id @default(autoincrement())
+  title      String
+  body       String
+
+  channelId  Int
+  authorId   Int
+
+  createdAt  DateTime @default(now())
+
+  channel    Channel @relation(fields: [channelId], references: [id])
+  author     User    @relation(fields: [authorId], references: [id])
+
+  replies    Reply[]
+  votes      Vote[]
+  attachments Attachment[]
+}
+
+model Reply {
+  id             Int      @id @default(autoincrement())
+  body           String
+
+  postId         Int
+  parentReplyId  Int?
+  authorId       Int
+
+  createdAt      DateTime @default(now())
+
+  post           Post @relation(fields: [postId], references: [id])
+  author         User @relation(fields: [authorId], references: [id])
+
+  parentReply    Reply?  @relation("ReplyThread", fields: [parentReplyId], references: [id])
+  childReplies   Reply[] @relation("ReplyThread")
+
+  votes          Vote[]
+  attachments    Attachment[]
+}
+
+model Vote {
+  id        Int   @id @default(autoincrement())
+  value     Int
+
+  userId    Int
+  postId    Int?
+  replyId   Int?
+
+  user      User  @relation(fields: [userId], references: [id])
+  post      Post? @relation(fields: [postId], references: [id])
+  reply     Reply? @relation(fields: [replyId], references: [id])
+
+  @@unique([userId, postId, replyId])
+}
+
+model Attachment {
+  id        Int   @id @default(autoincrement())
+  mimeType  String
+  sizeBytes Int
+  path      String
+
+  postId    Int?
+  replyId   Int?
+
+  post      Post?  @relation(fields: [postId], references: [id])
+  reply     Reply? @relation(fields: [replyId], references: [id])
 }
