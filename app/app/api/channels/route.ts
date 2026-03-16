@@ -13,12 +13,13 @@ export async function GET() {
 
     return NextResponse.json(channels);
   } catch (error) {
-    return NextResponse.json(
-      { error: "Failed to fetch channels" },
-      { status: 500 }
-    );
-  }
-}
+  console.error(error);
+
+  return NextResponse.json(
+    { error: "Failed to fetch channels" },
+    { status: 500 }
+  );
+}}
 
 
 // CREATE a channel
@@ -43,9 +44,11 @@ export async function POST(req: Request) {
 
     return NextResponse.json(channel);
   } catch (error) {
-    return NextResponse.json(
-      { error: "Failed to create channel" },
-      { status: 500 }
-    );
-  }
+  console.error(error);
+
+  return NextResponse.json(
+    { error: "Failed to fetch channels" },
+    { status: 500 }
+  );
+}
 }
