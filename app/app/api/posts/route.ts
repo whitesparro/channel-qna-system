@@ -1,27 +1,22 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 
-type CreatePostBody = {
-  title?: string;
-  body?: string;
-  channelId?: number;
-  authorId?: number;
-};
-
-// GET all posts
-export async function GET() {
+// GET posts (optionally filter by channel)
+export async function GET(req: Request) {
   try {
+    const { searchParams } = new URL(req.url);
+    const channelId = searchParams.get("channelId");
+
     const posts = await prisma.post.findMany({
-      include: {
-        channel: true,
-        author: true,
-        replies: true
-      }
+      where: channelId
+        ? { channelId: Number(channelId) }
+        : {},
+      orderBy: { createdAt: "desc" }
     });
 
     return NextResponse.json(posts);
   } catch (error) {
-    console.error(error);
+    console.error("GET POSTS ERROR:", error);
 
     return NextResponse.json(
       { error: "Failed to fetch posts" },
@@ -30,30 +25,32 @@ export async function GET() {
   }
 }
 
-// CREATE a post
+// CREATE post
 export async function POST(req: Request) {
   try {
-    const body: CreatePostBody = await req.json();
+    const body = await req.json();
 
-    if (!body.title || !body.body || !body.channelId || !body.authorId) {
+    const { title, body: content, channelId } = body;
+
+    if (!title || !content || !channelId) {
       return NextResponse.json(
-        { error: "Missing required fields" },
+        { error: "Missing fields" },
         { status: 400 }
       );
     }
 
     const post = await prisma.post.create({
       data: {
-        title: body.title,
-        body: body.body,
-        channelId: body.channelId,
-        authorId: body.authorId
+        title,
+        body: content,
+        channelId: Number(channelId),
+        authorId: 1 // temporary (auth comes later)
       }
     });
 
     return NextResponse.json(post);
   } catch (error) {
-    console.error(error);
+    console.error("CREATE POST ERROR:", error);
 
     return NextResponse.json(
       { error: "Failed to create post" },
