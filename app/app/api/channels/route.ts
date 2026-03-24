@@ -4,13 +4,18 @@ import prisma from "@/lib/prisma";
 // GET all channels
 export async function GET() {
   try {
+    console.log("GET channels hit");
+
     const channels = await prisma.channel.findMany();
+
+    console.log("Channels:", channels);
+
     return NextResponse.json(channels);
   } catch (error) {
-    console.error("GET CHANNEL ERROR:", error);
+    console.error("CHANNEL ERROR:", error);
 
     return NextResponse.json(
-      { error: "Failed to fetch channels" },
+      { error: "Failed", details: String(error) },
       { status: 500 }
     );
   }
