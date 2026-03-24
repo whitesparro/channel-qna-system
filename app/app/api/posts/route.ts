@@ -39,18 +39,20 @@ export async function POST(req: Request) {
       data: {
         title,
         body: content,
-        channelId: Number(channelId),
-        authorId: 1 // temporary until auth (Part 2)
+        
+        channel: {
+          connect: { id: Number(channelId) } 
+        }
       }
     });
 
     return NextResponse.json(post);
   } catch (error) {
-    console.error("CREATE POST ERROR:", error);
+  console.error("FULL POST ERROR:", error);
 
-    return NextResponse.json(
-      { error: "Failed to create post" },
-      { status: 500 }
-    );
-  }
+  return NextResponse.json(
+    { error: "Failed to create post", details: String(error) },
+    { status: 500 }
+  );
+}
 }

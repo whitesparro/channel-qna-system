@@ -39,10 +39,10 @@ model Post {
   createdAt DateTime @default(now())
 
   channelId Int
-  authorId  Int
+  authorId  Int?
 
   channel     Channel      @relation("ChannelPosts", fields: [channelId], references: [id])
-  author      User         @relation(fields: [authorId], references: [id])
+  author      User?         @relation(fields: [authorId], references: [id])
   replies     Reply[]
   votes       Vote[]
   attachments Attachment[]
