@@ -8,93 +8,90 @@ datasource db {
 }
 
 model User {
-  id            Int      @id @default(autoincrement())
-  displayName   String
-  passwordHash  String
-  role          String   @default("user")
+  id           Int    @id @default(autoincrement())
+  displayName  String
+  passwordHash String
+  role         String
 
-  posts         Post[]
-  replies       Reply[]
-  votes         Vote[]
-  channels      Channel[] @relation("UserChannels")
+  posts   Post[]
+  replies Reply[]
+  votes   Vote[]
 
-  createdAt     DateTime @default(now())
+  channels Channel[] @relation("UserChannels")
 }
 
 model Channel {
   id          Int      @id @default(autoincrement())
   name        String   @unique
   description String?
-  createdBy   Int
   createdAt   DateTime @default(now())
 
-  creator     User     @relation("UserChannels", fields: [createdBy], references: [id])
+  creatorId Int?
+  creator   User? @relation("UserChannels", fields: [creatorId], references: [id])
 
-  posts       Post[]
+  posts Post[] @relation("ChannelPosts")
 }
 
 model Post {
-  id         Int      @id @default(autoincrement())
-  title      String
-  body       String
+  id        Int      @id @default(autoincrement())
+  title     String
+  body      String
+  createdAt DateTime @default(now())
 
-  channelId  Int
-  authorId   Int
+  channelId Int
+  authorId  Int
 
-  createdAt  DateTime @default(now())
-
-  channel    Channel @relation(fields: [channelId], references: [id])
-  author     User    @relation(fields: [authorId], references: [id])
-
-  replies    Reply[]
-  votes      Vote[]
+  channel     Channel      @relation("ChannelPosts", fields: [channelId], references: [id])
+  author      User         @relation(fields: [authorId], references: [id])
+  replies     Reply[]
+  votes       Vote[]
   attachments Attachment[]
 }
 
 model Reply {
-  id             Int      @id @default(autoincrement())
-  body           String
+  id   Int    @id @default(autoincrement())
+  body String
 
-  postId         Int
-  parentReplyId  Int?
-  authorId       Int
+  postId        Int
+  parentReplyId Int?
+  authorId      Int
 
-  createdAt      DateTime @default(now())
+  createdAt DateTime @default(now())
 
-  post           Post @relation(fields: [postId], references: [id])
-  author         User @relation(fields: [authorId], references: [id])
+  post   Post @relation(fields: [postId], references: [id])
+  author User @relation(fields: [authorId], references: [id])
 
-  parentReply    Reply?  @relation("ReplyThread", fields: [parentReplyId], references: [id])
-  childReplies   Reply[] @relation("ReplyThread")
+  parentReply  Reply?  @relation("ReplyThread", fields: [parentReplyId], references: [id])
+  childReplies Reply[] @relation("ReplyThread")
 
-  votes          Vote[]
-  attachments    Attachment[]
+  votes       Vote[]
+  attachments Attachment[]
 }
 
 model Vote {
-  id        Int   @id @default(autoincrement())
-  value     Int
+  id    Int @id @default(autoincrement())
+  value Int
 
-  userId    Int
-  postId    Int?
-  replyId   Int?
+  userId  Int
+  postId  Int?
+  replyId Int?
 
-  user      User  @relation(fields: [userId], references: [id])
-  post      Post? @relation(fields: [postId], references: [id])
-  reply     Reply? @relation(fields: [replyId], references: [id])
+  user  User   @relation(fields: [userId], references: [id])
+  post  Post?  @relation(fields: [postId], references: [id])
+  reply Reply? @relation(fields: [replyId], references: [id])
 
   @@unique([userId, postId, replyId])
 }
 
 model Attachment {
-  id        Int   @id @default(autoincrement())
+  id        Int    @id @default(autoincrement())
   mimeType  String
   sizeBytes Int
   path      String
 
-  postId    Int?
-  replyId   Int?
+  postId  Int?
+  replyId Int?
 
-  post      Post?  @relation(fields: [postId], references: [id])
-  reply     Reply? @relation(fields: [replyId], references: [id])
+  post  Post?  @relation(fields: [postId], references: [id])
+  reply Reply? @relation(fields: [replyId], references: [id])
 }
