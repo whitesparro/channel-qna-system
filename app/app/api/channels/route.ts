@@ -1,26 +1,20 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
-
+import prisma from "@/lib/prisma";
 
 // GET all channels
 export async function GET() {
   try {
-    const channels = await prisma.channel.findMany({
-      include: {
-        posts: true
-      }
-    });
-
+    const channels = await prisma.channel.findMany();
     return NextResponse.json(channels);
   } catch (error) {
-  console.error(error);
+    console.error("GET CHANNEL ERROR:", error);
 
-  return NextResponse.json(
-    { error: "Failed to fetch channels" },
-    { status: 500 }
-  );
-}}
-
+    return NextResponse.json(
+      { error: "Failed to fetch channels" },
+      { status: 500 }
+    );
+  }
+}
 
 // CREATE a channel
 export async function POST(req: Request) {
@@ -38,17 +32,17 @@ export async function POST(req: Request) {
       data: {
         name: body.name,
         description: body.description ?? "",
-        createdBy: body.createdBy ?? 1
+        creatorId: undefined // ✅ FIX: satisfies Prisma relation
       }
     });
 
     return NextResponse.json(channel);
   } catch (error) {
-  console.error(error);
+    console.error("CREATE CHANNEL ERROR:", error);
 
-  return NextResponse.json(
-    { error: "Failed to fetch channels" },
-    { status: 500 }
-  );
-}
+    return NextResponse.json(
+      { error: "Failed to create channel" },
+      { status: 500 }
+    );
+  }
 }
