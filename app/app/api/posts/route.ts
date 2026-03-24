@@ -4,22 +4,18 @@ import prisma from "@/lib/prisma";
 // GET posts (optionally filter by channel)
 export async function GET(req: Request) {
   try {
-    const { searchParams } = new URL(req.url);
-    const channelId = searchParams.get("channelId");
+    console.log("GET posts hit");
 
-    const posts = await prisma.post.findMany({
-      where: channelId
-        ? { channelId: Number(channelId) }
-        : {},
-      orderBy: { createdAt: "desc" }
-    });
+    const posts = await prisma.post.findMany();
+
+    console.log("Posts:", posts);
 
     return NextResponse.json(posts);
   } catch (error) {
-    console.error("GET POSTS ERROR:", error);
+    console.error("POSTS ERROR:", error);
 
     return NextResponse.json(
-      { error: "Failed to fetch posts" },
+      { error: "Failed", details: String(error) },
       { status: 500 }
     );
   }
@@ -43,18 +39,20 @@ export async function POST(req: Request) {
       data: {
         title,
         body: content,
-        channelId: Number(channelId),
-        authorId: 1 // temporary (auth comes later)
+        
+        channel: {
+          connect: { id: Number(channelId) } 
+        }
       }
     });
 
     return NextResponse.json(post);
   } catch (error) {
-    console.error("CREATE POST ERROR:", error);
+  console.error("FULL POST ERROR:", error);
 
-    return NextResponse.json(
-      { error: "Failed to create post" },
-      { status: 500 }
-    );
-  }
+  return NextResponse.json(
+    { error: "Failed to create post", details: String(error) },
+    { status: 500 }
+  );
+}
 }
