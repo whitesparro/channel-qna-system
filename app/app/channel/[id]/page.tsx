@@ -25,12 +25,12 @@ export default function ChannelPage() {
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
 
-  // 🔥 NEW STATE
+  //   NEW STATE
   const [repliesMap, setRepliesMap] = useState<Record<number, Reply[]>>({});
   const [replyInputs, setReplyInputs] = useState<Record<number, string>>({});
 
  
-  // 🔥 FETCH REPLIES
+  //   FETCH REPLIES
   const fetchReplies = async (postId: number) => {
     const data: Reply[] = await fetch(
       `/api/replies?postId=${postId}`
@@ -42,14 +42,14 @@ export default function ChannelPage() {
     }));
   };
  
-  
+
   useEffect(() => {
     fetch(`/api/posts?channelId=${channelId}`)
       .then((res) => res.json())
       .then((data: Post[]) => {
         setPosts(data);
 
-        // 🔥 load replies for each post
+        //   load replies for each post
         data.forEach((post) => fetchReplies(post.id));
       });
   }, [channelId]);
@@ -82,7 +82,7 @@ export default function ChannelPage() {
     }
   };
 
-  // 🔥 CREATE REPLY
+  //   CREATE REPLY
   const handleReplySubmit = async (postId: number) => {
     const content = replyInputs[postId];
     if (!content) return;
@@ -202,7 +202,7 @@ export default function ChannelPage() {
               <h3>{post.title}</h3>
               <p style={{ color: "#ccc" }}>{post.body}</p>
 
-              {/* 🔥 REPLIES */}
+              {/*   REPLIES */}
               <div style={{ marginTop: "15px" }}>
                 <h4 style={{ fontSize: "14px" }}>Replies</h4>
 
@@ -227,7 +227,7 @@ export default function ChannelPage() {
                   </p>
                 )}
 
-                {/* 🔥 ADD REPLY */}
+                {/*   ADD REPLY */}
                 <input
                   placeholder="Write a reply..."
                   value={replyInputs[post.id] || ""}
