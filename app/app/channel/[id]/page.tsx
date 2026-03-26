@@ -3,26 +3,58 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 
-// type
+// types
 type Post = {
   id: number;
   title: string;
   body: string;
 };
 
+type Reply = {
+  id: number;
+  body: string;
+  postId: number;
+  parentReplyId: number | null;
+};
+
 export default function ChannelPage() {
-  const params = useParams(); // ✅ correct way
+  const params = useParams();
   const channelId = Number(params.id);
 
   const [posts, setPosts] = useState<Post[]>([]);
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
 
+  // 🔥 NEW STATE
+  const [repliesMap, setRepliesMap] = useState<Record<number, Reply[]>>({});
+  const [replyInputs, setReplyInputs] = useState<Record<number, string>>({});
+
+ 
+  // 🔥 FETCH REPLIES
+  const fetchReplies = async (postId: number) => {
+    const data: Reply[] = await fetch(
+      `/api/replies?postId=${postId}`
+    ).then((res) => res.json());
+
+    setRepliesMap((prev) => ({
+      ...prev,
+      [postId]: data,
+    }));
+  };
+ 
+  
   useEffect(() => {
     fetch(`/api/posts?channelId=${channelId}`)
       .then((res) => res.json())
-      .then((data: Post[]) => setPosts(data));
+      .then((data: Post[]) => {
+        setPosts(data);
+
+        // 🔥 load replies for each post
+        data.forEach((post) => fetchReplies(post.id));
+      });
   }, [channelId]);
+
+ 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,126 +76,197 @@ export default function ChannelPage() {
       ).then((res) => res.json());
 
       setPosts(data);
+      data.forEach((post) => fetchReplies(post.id));
     } else {
       alert("Failed to create post");
     }
   };
 
- return (
-  <div
-    style={{
-      minHeight: "100vh",
-      backgroundColor: "#131315",
-      padding: "40px 20px",
-      fontFamily: "Arial, sans-serif",
-    }}
-  >
+  // 🔥 CREATE REPLY
+  const handleReplySubmit = async (postId: number) => {
+    const content = replyInputs[postId];
+    if (!content) return;
+
+    const res = await fetch("/api/replies", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        body: content,
+        postId,
+      }),
+    });
+
+    if (res.ok) {
+      setReplyInputs((prev) => ({ ...prev, [postId]: "" }));
+      fetchReplies(postId);
+    }
+  };
+
+  return (
     <div
       style={{
-        maxWidth: "800px",
-        margin: "0 auto",
+        minHeight: "100vh",
+        backgroundColor: "#131315",
+        padding: "40px 20px",
+        fontFamily: "Arial, sans-serif",
+        color: "white",
       }}
     >
-      {/* HEADER */}
-      <h1 style={{ fontSize: "28px", marginBottom: "20px" }}>
-        Channel {channelId}
-      </h1>
-
-      {/* CREATE POST CARD */}
       <div
         style={{
-          backgroundColor: "black",
-          borderRadius: "12px",
-          padding: "25px",
-          marginBottom: "30px",
-          boxShadow: "0 4px 10px rgba(0,0,0,0.05)",
+          maxWidth: "800px",
+          margin: "0 auto",
         }}
       >
-        <h2 style={{ marginBottom: "15px" }}>Create a Post</h2>
+        <h1 style={{ fontSize: "28px", marginBottom: "20px" }}>
+          Channel {channelId}
+        </h1>
 
-        <form onSubmit={handleSubmit}>
-          {/* TITLE */}
-          <label style={{ fontSize: "14px", color: "#555" }}>
-            Post Title
-          </label>
-          <input
-            placeholder="e.g. Why is my React state not updating?"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            style={{
-              width: "100%",
-              padding: "12px",
-              marginTop: "5px",
-              marginBottom: "15px",
-              borderRadius: "8px",
-              border: "1px solid #ddd",
-              outline: "none",
-            }}
-          />
+        {/* CREATE POST */}
+        <div
+          style={{
+            backgroundColor: "#1e1e22",
+            borderRadius: "12px",
+            padding: "25px",
+            marginBottom: "30px",
+          }}
+        >
+          <h2>Create a Post</h2>
 
-          {/* BODY */}
-          <label style={{ fontSize: "14px", color: "#555" }}>
-            Post Description
-          </label>
-          <textarea
-            placeholder="Explain your problem clearly..."
-            value={body}
-            onChange={(e) => setBody(e.target.value)}
-            style={{
-              width: "100%",
-              padding: "12px",
-              height: "120px",
-              marginTop: "5px",
-              marginBottom: "15px",
-              borderRadius: "8px",
-              border: "1px solid #ddd",
-              outline: "none",
-              resize: "none",
-            }}
-          />
+          <form onSubmit={handleSubmit}>
+            <input
+              placeholder="Post title..."
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              style={{
+                width: "100%",
+                padding: "12px",
+                marginBottom: "10px",
+                borderRadius: "8px",
+                border: "1px solid #333",
+                backgroundColor: "#2a2a2e",
+                color: "white",
+              }}
+            />
 
-          <button
-            type="submit"
-            style={{
-              backgroundColor: "#6366f1",
-              color: "white",
-              padding: "10px 18px",
-              border: "none",
-              borderRadius: "8px",
-              cursor: "pointer",
-              fontWeight: "500",
-            }}
-          >
-            Create Post
-          </button>
-        </form>
+            <textarea
+              placeholder="Write your post..."
+              value={body}
+              onChange={(e) => setBody(e.target.value)}
+              style={{
+                width: "100%",
+                height: "100px",
+                padding: "12px",
+                borderRadius: "8px",
+                border: "1px solid #333",
+                backgroundColor: "#2a2a2e",
+                color: "white",
+              }}
+            />
+
+            <button
+              type="submit"
+              style={{
+                marginTop: "10px",
+                backgroundColor: "#6366f1",
+                color: "white",
+                padding: "10px 16px",
+                border: "none",
+                borderRadius: "8px",
+                cursor: "pointer",
+              }}
+            >
+              Create Post
+            </button>
+          </form>
+        </div>
+
+        {/* POSTS */}
+        <h2>Posts</h2>
+
+        {posts.length === 0 ? (
+          <p style={{ color: "#aaa" }}>No posts yet</p>
+        ) : (
+          posts.map((post) => (
+            <div
+              key={post.id}
+              style={{
+                backgroundColor: "#1e1e22",
+                borderRadius: "12px",
+                padding: "20px",
+                marginBottom: "20px",
+              }}
+            >
+              <h3>{post.title}</h3>
+              <p style={{ color: "#ccc" }}>{post.body}</p>
+
+              {/* 🔥 REPLIES */}
+              <div style={{ marginTop: "15px" }}>
+                <h4 style={{ fontSize: "14px" }}>Replies</h4>
+
+                {repliesMap[post.id]?.length ? (
+                  repliesMap[post.id].map((reply) => (
+                    <div
+                      key={reply.id}
+                      style={{
+                        backgroundColor: "#2a2a2e",
+                        padding: "8px",
+                        borderRadius: "6px",
+                        marginBottom: "5px",
+                        fontSize: "14px",
+                      }}
+                    >
+                      {reply.body}
+                    </div>
+                  ))
+                ) : (
+                  <p style={{ color: "#888", fontSize: "13px" }}>
+                    No replies yet
+                  </p>
+                )}
+
+                {/* 🔥 ADD REPLY */}
+                <input
+                  placeholder="Write a reply..."
+                  value={replyInputs[post.id] || ""}
+                  onChange={(e) =>
+                    setReplyInputs((prev) => ({
+                      ...prev,
+                      [post.id]: e.target.value,
+                    }))
+                  }
+                  style={{
+                    width: "100%",
+                    marginTop: "10px",
+                    padding: "8px",
+                    borderRadius: "6px",
+                    border: "1px solid #333",
+                    backgroundColor: "#2a2a2e",
+                    color: "white",
+                  }}
+                />
+
+                <button
+                  onClick={() => handleReplySubmit(post.id)}
+                  style={{
+                    marginTop: "5px",
+                    backgroundColor: "#6366f1",
+                    color: "white",
+                    padding: "6px 10px",
+                    border: "none",
+                    borderRadius: "6px",
+                    cursor: "pointer",
+                  }}
+                >
+                  Reply
+                </button>
+              </div>
+            </div>
+          ))
+        )}
       </div>
-
-      {/* POSTS */}
-      <h2 style={{ marginBottom: "15px" }}>Posts</h2>
-
-      {posts.length === 0 ? (
-        <p style={{ color: "#777" }}>No posts yet</p>
-      ) : (
-        posts.map((post) => (
-          <div
-            key={post.id}
-            style={{
-              backgroundColor: "black",
-              borderRadius: "12px",
-              padding: "20px",
-              marginBottom: "15px",
-              boxShadow: "0 2px 6px rgba(0,0,0,0.05)",
-            }}
-          >
-            <h3 style={{ marginBottom: "8px" }}>{post.title}</h3>
-            <p style={{ color: "#444", lineHeight: "1.5" }}>
-              {post.body}
-            </p>
-          </div>
-        ))
-      )}
     </div>
-  </div>
-);
+  );
 }
