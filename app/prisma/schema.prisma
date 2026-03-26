@@ -54,12 +54,12 @@ model Reply {
 
   postId        Int
   parentReplyId Int?
-  authorId      Int
+  authorId      Int?
 
   createdAt DateTime @default(now())
 
   post   Post @relation(fields: [postId], references: [id])
-  author User @relation(fields: [authorId], references: [id])
+  author User? @relation(fields: [authorId], references: [id])
 
   parentReply  Reply?  @relation("ReplyThread", fields: [parentReplyId], references: [id])
   childReplies Reply[] @relation("ReplyThread")

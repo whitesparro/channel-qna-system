@@ -53,7 +53,7 @@ export default function ChannelPage() {
   <div
     style={{
       minHeight: "100vh",
-      backgroundColor: "#f5f7fb",
+      backgroundColor: "#131315",
       padding: "40px 20px",
       fontFamily: "Arial, sans-serif",
     }}
