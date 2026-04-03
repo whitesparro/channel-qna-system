@@ -7,6 +7,16 @@ async function main() {
   await prisma.reply.deleteMany();
   await prisma.post.deleteMany();
   await prisma.channel.deleteMany();
+  await prisma.user.deleteMany(); // ADD THIS
+
+  // CREATE USER FIRST
+  const user = await prisma.user.create({
+    data: {
+      displayName: "Demo User",
+      passwordHash: "hashedpassword",
+      role: "USER",
+    },
+  });
 
   // Create channel
   const channel = await prisma.channel.create({
@@ -22,7 +32,7 @@ async function main() {
       title: "How do I use React hooks?",
       body: "I am confused about useEffect and useState.",
       channelId: channel.id,
-      authorId: 1, // adjust if needed
+      authorId: user.id, //  FIXED
     },
   });
 
@@ -31,7 +41,7 @@ async function main() {
       title: "What is Prisma?",
       body: "Can someone explain Prisma ORM simply?",
       channelId: channel.id,
-      authorId: 1,
+      authorId: user.id, //  FIXED
     },
   });
 
@@ -40,7 +50,15 @@ async function main() {
     data: {
       body: "useState manages state, useEffect handles side effects.",
       postId: post1.id,
-      authorId: 1,
+      authorId: user.id, //  FIXED
+    },
+  });
+
+  await prisma.reply.create({
+    data: {
+      body: "Prisma is an ORM that simplifies database access.",
+      postId: post2.id,
+      authorId: user.id, //  FIXED
     },
   });
 
@@ -49,11 +67,11 @@ async function main() {
       body: "Also check the React docs!",
       postId: post1.id,
       parentReplyId: reply1.id,
-      authorId: 1,
+      authorId: user.id, //  FIXED
     },
   });
 
-  console.log("🌱 Seed data created");
+  console.log(" Seed data created");
 }
 
 main()
