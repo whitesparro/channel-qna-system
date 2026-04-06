@@ -12,15 +12,16 @@ async function main() {
   // CREATE USER FIRST
   const user = await prisma.user.create({
     data: {
-      displayName: "Demo User",
+      displayName: "admin",
       passwordHash: "hashedpassword",
-      role: "USER",
+      role: "admin",
     },
   });
 
   // Create channel
   const channel = await prisma.channel.create({
     data: {
+      id: 1, // FIXED: Set ID to 1 for consistent seeding
       name: "general",
       description: "General programming discussion",
     },
