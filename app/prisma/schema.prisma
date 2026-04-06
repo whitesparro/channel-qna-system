@@ -9,9 +9,9 @@ datasource db {
 
 model User {
   id           Int    @id @default(autoincrement())
-  displayName  String
+  displayName  String @unique
   passwordHash String
-  role         String
+  role         String @default("USER")
 
   posts   Post[]
   replies Reply[]
