@@ -375,19 +375,46 @@ export default function ChannelPage() {
   const [replyInputs, setReplyInputs] = useState<Record<number, string>>({});
 
   const fetchReplies = useCallback(async (postId: number): Promise<void> => {
-    const data: Reply[] = await fetch(`/api/replies?postId=${postId}`).then(
-      (res) => res.json()
-    );
-    setRepliesMap((prev) => ({ ...prev, [postId]: data }));
-  }, []);
+  try {
+    const res = await fetch(`/api/replies?postId=${postId}`);
+
+    if (!res.ok) {
+      setRepliesMap((prev) => ({ ...prev, [postId]: [] }));
+      return;
+    }
+
+    const data = await res.json();
+
+    setRepliesMap((prev) => ({
+      ...prev,
+      [postId]: Array.isArray(data) ? data : [],
+    }));
+  } catch {
+    setRepliesMap((prev) => ({ ...prev, [postId]: [] }));
+  }
+}, []);
 
   const refreshPosts = useCallback(async () => {
-    const data: Post[] = await fetch(`/api/posts?channelId=${channelId}`).then(
-      (res) => res.json()
-    );
-    setPosts(data);
-    data.forEach((post) => void fetchReplies(post.id));
-  }, [channelId, fetchReplies]);
+  try {
+    const res = await fetch(`/api/posts?channelId=${channelId}`);
+
+    if (!res.ok) {
+      setPosts([]);
+      return;
+    }
+
+    const data = await res.json();
+    const safePosts = Array.isArray(data) ? data : [];
+
+    setPosts(safePosts);
+
+    safePosts.forEach((post) => {
+      void fetchReplies(post.id);
+    });
+  } catch {
+    setPosts([]);
+  }
+}, [channelId, fetchReplies]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect

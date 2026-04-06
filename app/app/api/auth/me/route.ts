@@ -3,8 +3,7 @@ import prisma from "@/lib/prisma";
 import { cookies } from "next/headers";
 
 export async function GET() {
-  const cookiesStore = await cookies();
-  const userId = cookiesStore.get("userId")?.value;
+  const userId = (await cookies()).get("userId")?.value;
 
   if (!userId) {
     return NextResponse.json(null);

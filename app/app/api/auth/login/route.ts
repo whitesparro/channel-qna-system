@@ -1,10 +1,18 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import bcrypt from "bcrypt";
+import { cookies } from "next/headers";
 
 export async function POST(req: Request) {
   try {
     const { displayName, password } = await req.json();
+
+    if (!displayName || !password) {
+      return NextResponse.json(
+        { error: "Missing fields" },
+        { status: 400 }
+      );
+    }
 
     const user = await prisma.user.findUnique({
       where: { displayName },
@@ -26,10 +34,16 @@ export async function POST(req: Request) {
       );
     }
 
-    // TEMP: return user (we add sessions next)
+    // SET COOKIE
+    (await
+      // SET COOKIE
+      cookies()).set("userId", String(user.id), {
+      httpOnly: true,
+      path: "/",
+    });
+
     return NextResponse.json({
       message: "Login successful",
-      user,
     });
   } catch (error) {
     console.error(error);

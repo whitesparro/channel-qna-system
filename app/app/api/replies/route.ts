@@ -1,34 +1,39 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { cookies } from "next/headers";
 
-// GET replies for a post
+// GET REPLIES
 export async function GET(req: Request) {
-  try {
-    const { searchParams } = new URL(req.url);
-    const postId = searchParams.get("postId");
+  const { searchParams } = new URL(req.url);
+  const postId = searchParams.get("postId");
 
-    const replies = await prisma.reply.findMany({
-      where: {
-        postId: postId ? Number(postId) : undefined,
-      },
-      orderBy: { createdAt: "asc" },
-    });
+  const replies = await prisma.reply.findMany({
+    where: {
+      postId: Number(postId),
+    },
+    orderBy: {
+      id: "asc",
+    },
+  });
 
-    return NextResponse.json(replies);
-  } catch (error) {
-    console.error("GET REPLIES ERROR:", error);
-    return NextResponse.json({ error: "Failed" }, { status: 500 });
-  }
+  return NextResponse.json(replies);
 }
 
-// CREATE reply
+// CREATE REPLY (PROTECTED)
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
+    const userId = (await cookies()).get("userId")?.value;
 
-    const { body: content, postId, parentReplyId } = body;
+    if (!userId) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
 
-    if (!content || !postId) {
+    const { body, postId, parentReplyId } = await req.json();
+
+    if (!body || !postId) {
       return NextResponse.json(
         { error: "Missing fields" },
         { status: 400 }
@@ -37,18 +42,21 @@ export async function POST(req: Request) {
 
     const reply = await prisma.reply.create({
       data: {
-        body: content,
+        body,
         postId: Number(postId),
         parentReplyId: parentReplyId
           ? Number(parentReplyId)
           : null,
-        authorId: null, // no auth yet
+        authorId: Number(userId),
       },
     });
 
     return NextResponse.json(reply);
   } catch (error) {
-    console.error("CREATE REPLY ERROR:", error);
-    return NextResponse.json({ error: "Failed" }, { status: 500 });
+    console.error(error);
+    return NextResponse.json(
+      { error: "Failed to create reply" },
+      { status: 500 }
+    );
   }
 }
