@@ -1,53 +1,37 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { cookies } from "next/headers";
 
-// GET all channels
 export async function GET() {
-  try {
-    console.log("GET channels hit");
-
-    const channels = await prisma.channel.findMany();
-
-    console.log("Channels:", channels);
-
-    return NextResponse.json(channels);
-  } catch (error) {
-    console.error("CHANNEL ERROR:", error);
-
-    return NextResponse.json(
-      { error: "Failed", details: String(error) },
-      { status: 500 }
-    );
-  }
+  const channels = await prisma.channel.findMany({
+    include: { creator: { select: { displayName: true } }, _count: { select: { posts: true } } },
+    orderBy: { createdAt: "desc" },
+  });
+  return NextResponse.json(channels);
 }
 
-// CREATE a channel
 export async function POST(req: Request) {
+  const userId = (await cookies()).get("userId")?.value;
+  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const body = await req.json();
+  if (!body.name || body.name.trim().length === 0) {
+    return NextResponse.json({ error: "Channel name is required" }, { status: 400 });
+  }
+  if (body.name.length > 50) {
+    return NextResponse.json({ error: "Channel name too long" }, { status: 400 });
+  }
+
   try {
-    const body = await req.json();
-
-    if (!body.name) {
-      return NextResponse.json(
-        { error: "Channel name is required" },
-        { status: 400 }
-      );
-    }
-
     const channel = await prisma.channel.create({
       data: {
-        name: body.name,
-        description: body.description ?? "",
-        creatorId: undefined // ✅ FIX: satisfies Prisma relation
-      }
+        name: body.name.trim(),
+        description: body.description?.trim() ?? "",
+        creatorId: Number(userId),
+      },
     });
-
     return NextResponse.json(channel);
-  } catch (error) {
-    console.error("CREATE CHANNEL ERROR:", error);
-
-    return NextResponse.json(
-      { error: "Failed to create channel" },
-      { status: 500 }
-    );
+  } catch {
+    return NextResponse.json({ error: "Channel name already taken" }, { status: 400 });
   }
 }

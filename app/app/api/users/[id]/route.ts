@@ -2,33 +2,22 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { cookies } from "next/headers";
 
-export async function DELETE(
-  req: Request,
-  { params }: { params: { id: string } }
-) {
-  const cookieStore = cookies();
-  const userId = (await cookieStore).get("userId")?.value;
+export async function DELETE(req: Request, { params }: { params: { id: string } }) {
+  const userId = (await cookies()).get("userId")?.value;
+  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const user = await prisma.user.findUnique({ where: { id: Number(userId) } });
+  if (user?.role !== "ADMIN") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-  const user = await prisma.user.findUnique({
-    where: { id: Number(userId) },
-  });
+  const targetId = Number(params.id);
+  if (targetId === Number(userId)) return NextResponse.json({ error: "Cannot delete yourself" }, { status: 400 });
 
-  if (user?.role !== "ADMIN") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
-
-  // Prevent admin from deleting themselves
-  if (Number(params.id) === Number(userId)) {
-    return NextResponse.json({ error: "Cannot delete yourself" }, { status: 400 });
-  }
-
-  await prisma.user.delete({
-    where: { id: Number(params.id) },
-  });
+  // Remove votes first, then nullify author references
+  await prisma.vote.deleteMany({ where: { userId: targetId } });
+  await prisma.reply.updateMany({ where: { authorId: targetId }, data: { authorId: null } });
+  await prisma.post.updateMany({ where: { authorId: targetId }, data: { authorId: null } });
+  await prisma.channel.updateMany({ where: { creatorId: targetId }, data: { creatorId: null } });
+  await prisma.user.delete({ where: { id: targetId } });
 
   return NextResponse.json({ success: true });
 }
