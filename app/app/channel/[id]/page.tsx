@@ -20,6 +20,7 @@ type Post = {
   id: number;
   title: string;
   body: string;
+  authorId?: number | null;
   author?: { displayName: string };
   votes?: { value: number }[];
   attachments?: Attachment[];
@@ -209,16 +210,30 @@ export default function ChannelPage() {
     }
   };
 
+  const safeJson = async (res: Response) => {
+    try { return await res.json(); } catch { return {}; }
+  };
+
   const handleDeletePost = async (postId: number) => {
     if (!confirm("Delete this post? This cannot be undone.")) return;
-    await fetch(`/api/posts/${postId}`, { method: "DELETE", credentials: "include" });
-    refreshPosts();
+    const res = await fetch(`/api/posts/${postId}`, { method: "DELETE", credentials: "include" });
+    if (res.ok) {
+      await refreshPosts();
+    } else {
+      const d = await safeJson(res);
+      alert(d.error || `Failed to delete post (${res.status})`);
+    }
   };
 
   const handleDeleteReply = async (replyId: number, postId: number) => {
     if (!confirm("Delete this reply?")) return;
-    await fetch(`/api/replies/${replyId}`, { method: "DELETE", credentials: "include" });
-    fetchReplies(postId);
+    const res = await fetch(`/api/replies/${replyId}`, { method: "DELETE", credentials: "include" });
+    if (res.ok) {
+      fetchReplies(postId);
+    } else {
+      const d = await safeJson(res);
+      alert(d.error || `Failed to delete reply (${res.status})`);
+    }
   };
 
   return (
@@ -297,7 +312,7 @@ export default function ChannelPage() {
                     <div style={{ display: "flex", gap: 14, alignItems: "center", flexWrap: "wrap" }}>
                       <small style={{ color: "#555" }}>by {post.author?.displayName ?? "unknown"}</small>
                       <VoteBar targetId={post.id} targetType="post" currentUser={user} />
-                      {user?.role === "ADMIN" && (
+                      {(user?.role === "ADMIN" || (user?.id && post.authorId === user.id)) && (
                         <button style={{ ...S.btnSm, color: "#f87" }} onClick={() => handleDeletePost(post.id)}>Delete Post</button>
                       )}
                     </div>
