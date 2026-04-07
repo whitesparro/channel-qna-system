@@ -28,8 +28,6 @@ type Reply = {
   };
 };
 
-type ReplyNode = Reply & { children: ReplyNode[] };
-
 export default function ChannelPage() {
   const params = useParams();
   const channelId = Number(params.id);
@@ -38,42 +36,33 @@ export default function ChannelPage() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
-  const [submitting, setSubmitting] = useState(false);
-
-  const [repliesMap, setRepliesMap] = useState<Record<number, Reply[]>>({});
   const [replyInputs, setReplyInputs] = useState<Record<number, string>>({});
+  const [repliesMap, setRepliesMap] = useState<Record<number, Reply[]>>({});
 
-  // 🔐 GET USER
+  // GET USER
   useEffect(() => {
     fetch("/api/auth/me", { credentials: "include" })
       .then((res) => res.json())
-      .then(setUser)
-      .catch(() => setUser(null));
+      .then(setUser);
   }, []);
 
-  // 🔁 FETCH REPLIES
+  // FETCH REPLIES
   const fetchReplies = useCallback(async (postId: number) => {
-    const res = await fetch(`/api/replies?postId=${postId}`, {
-      credentials: "include",
-    });
-
+    const res = await fetch(`/api/replies?postId=${postId}`);
     const data = await res.json();
 
-    setRepliesMap((p) => ({
-      ...p,
+    setRepliesMap((prev) => ({
+      ...prev,
       [postId]: Array.isArray(data) ? data : [],
     }));
   }, []);
 
-  // 🔁 FETCH POSTS
+  // FETCH POSTS
   const refreshPosts = useCallback(async () => {
-    const res = await fetch(`/api/posts?channelId=${channelId}`, {
-      credentials: "include",
-    });
-
+    const res = await fetch(`/api/posts?channelId=${channelId}`);
     const data = await res.json();
-    const safe = Array.isArray(data) ? data : [];
 
+    const safe = Array.isArray(data) ? data : [];
     setPosts(safe);
 
     safe.forEach((p) => fetchReplies(p.id));
@@ -94,14 +83,11 @@ export default function ChannelPage() {
   };
 }, [refreshPosts]);
 
-  // ➕ CREATE POST
+  // CREATE POST
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!user) {
-      alert("Login required");
-      return;
-    }
+    if (!user) return alert("Login required");
 
     const res = await fetch("/api/posts", {
       method: "POST",
@@ -119,25 +105,23 @@ export default function ChannelPage() {
     }
   };
 
-  // 💬 CREATE REPLY
+  // CREATE REPLY
   const handleReplySubmit = async (postId: number) => {
     const content = replyInputs[postId];
-    if (!content?.trim()) return;
+    if (!content) return;
 
-    const res = await fetch("/api/replies", {
+    await fetch("/api/replies", {
       method: "POST",
       credentials: "include",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ body: content, postId }),
     });
 
-    if (res.ok) {
-      setReplyInputs((p) => ({ ...p, [postId]: "" }));
-      fetchReplies(postId);
-    }
+    setReplyInputs((p) => ({ ...p, [postId]: "" }));
+    fetchReplies(postId);
   };
 
-  // 🗑 DELETE POST
+  // DELETE POST (ADMIN)
   const handleDeletePost = async (postId: number) => {
     if (!confirm("Delete this post?")) return;
 
@@ -149,7 +133,7 @@ export default function ChannelPage() {
     refreshPosts();
   };
 
-  // 🗑 DELETE REPLY
+  // DELETE REPLY (ADMIN)
   const handleDeleteReply = async (replyId: number, postId: number) => {
     if (!confirm("Delete this reply?")) return;
 
@@ -161,51 +145,19 @@ export default function ChannelPage() {
     fetchReplies(postId);
   };
 
-  // 🌳 TREE
-  const buildTree = (replies: Reply[]): ReplyNode[] => {
-    const map: Record<number, ReplyNode> = {};
-    const roots: ReplyNode[] = [];
-
-    replies.forEach((r) => (map[r.id] = { ...r, children: [] }));
-
-    replies.forEach((r) => {
-      if (r.parentReplyId) {
-        map[r.parentReplyId]?.children.push(map[r.id]);
-      } else {
-        roots.push(map[r.id]);
-      }
-    });
-
-    return roots;
-  };
-
-  const renderReplies = (nodes: ReplyNode[]) =>
-    nodes.map((r) => (
-      <div key={r.id} style={{ marginLeft: 20 }}>
-        <p>{r.body}</p>
-        <small>{r.author?.displayName}</small>
-
-        {user?.role === "ADMIN" && (
-          <button onClick={() => handleDeleteReply(r.id, r.postId)}>
-            Delete
-          </button>
-        )}
-
-        {r.children.length > 0 && renderReplies(r.children)}
-      </div>
-    ));
-
   return (
-    <div style={{ padding: 20 }}>
+    <div style={{ padding: 30, maxWidth: 800, margin: "auto", color: "white" }}>
+      
       {/* HEADER */}
-      <div style={{ display: "flex", justifyContent: "space-between" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 30 }}>
         <h2>Channel #{channelId}</h2>
 
         <div>
           {user ? (
             <>
-              👋 {user.displayName}
+              👋 <b>{user.displayName}</b> ({user.role})
               <button
+                style={{ marginLeft: 10 }}
                 onClick={async () => {
                   await fetch("/api/auth/logout", {
                     method: "POST",
@@ -219,68 +171,94 @@ export default function ChannelPage() {
             </>
           ) : (
             <>
-              <a href="/login">Login</a> |{" "}
-              <a href="/signup">Signup</a>
+              <a href="/login">Login</a> | <a href="/signup">Signup</a>
             </>
           )}
         </div>
       </div>
 
-      {!user && <p style={{ color: "red" }}>Login required to post</p>}
-
-      {/* FORM */}
-      <form onSubmit={handleSubmit}>
+      {/* CREATE POST */}
+      <form onSubmit={handleSubmit} style={{ marginBottom: 40 }}>
         <input
-          placeholder="Title"
+          placeholder="Post title"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
+          style={{ width: "100%", marginBottom: 10, padding: 10 }}
         />
         <textarea
-          placeholder="Body"
+          placeholder="Post body"
           value={body}
           onChange={(e) => setBody(e.target.value)}
+          style={{ width: "100%", marginBottom: 10, padding: 10 }}
         />
-        <button>Post</button>
+        <button disabled={!user}>Post</button>
       </form>
 
       {/* POSTS */}
-      {posts.map((post) => {
-        const tree = repliesMap[post.id]
-          ? buildTree(repliesMap[post.id])
-          : [];
+      {posts.map((post) => (
+        <div
+          key={post.id}
+          style={{
+            border: "1px solid #333",
+            borderRadius: 10,
+            padding: 20,
+            marginBottom: 20,
+          }}
+        >
+          <h3>{post.title}</h3>
+          <p>{post.body}</p>
+          <small>by {post.author?.displayName}</small>
 
-        return (
-          <div key={post.id}>
-            <h3>{post.title}</h3>
-            <p>{post.body}</p>
-            <small>{post.author?.displayName}</small>
-
-            {user?.role === "ADMIN" && (
-              <button onClick={() => handleDeletePost(post.id)}>
-                Delete
+          {/* ADMIN DELETE */}
+          {user?.role === "ADMIN" && (
+            <div>
+              <button
+                style={{ color: "red", marginTop: 10 }}
+                onClick={() => handleDeletePost(post.id)}
+              >
+                Delete Post
               </button>
-            )}
+            </div>
+          )}
 
-            {renderReplies(tree)}
+          {/* REPLIES */}
+          <div style={{ marginTop: 15 }}>
+            {repliesMap[post.id]?.map((r) => (
+              <div key={r.id} style={{ marginLeft: 20, marginBottom: 10 }}>
+                <p>{r.body}</p>
+                <small>{r.author?.displayName}</small>
 
-            <input
-              placeholder="Reply"
-              value={replyInputs[post.id] || ""}
-              onChange={(e) =>
-                setReplyInputs((p) => ({
-                  ...p,
-                  [post.id]: e.target.value,
-                }))
-              }
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  handleReplySubmit(post.id);
-                }
-              }}
-            />
+                {user?.role === "ADMIN" && (
+                  <button
+                    style={{ marginLeft: 10, color: "red" }}
+                    onClick={() => handleDeleteReply(r.id, post.id)}
+                  >
+                    Delete
+                  </button>
+                )}
+              </div>
+            ))}
           </div>
-        );
-      })}
+
+          {/* REPLY INPUT */}
+          <input
+            placeholder="Write a reply..."
+            value={replyInputs[post.id] || ""}
+            onChange={(e) =>
+              setReplyInputs((p) => ({
+                ...p,
+                [post.id]: e.target.value,
+              }))
+            }
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                handleReplySubmit(post.id);
+              }
+            }}
+            style={{ marginTop: 10, width: "100%", padding: 8 }}
+          />
+        </div>
+      ))}
     </div>
   );
 }
