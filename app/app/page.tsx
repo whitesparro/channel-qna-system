@@ -62,13 +62,13 @@ export default function Home() {
     <div style={{ minHeight: "100vh", background: "#0c0c0f", color: "#e8e8f0", fontFamily: "system-ui, sans-serif" }}>
       {/* NAV */}
       <nav style={{ background: "#111", borderBottom: "1px solid #222", padding: "14px 24px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <div style={{ fontSize: 20, fontWeight: 700, color: "#7c6af7" }}>📡 Channel Q&A</div>
+        <div style={{ fontSize: 20, fontWeight: 700, color: "#7c6af7" }}>Channel Q&A</div>
         <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-          <Link href="/search" style={{ color: "#aaa", textDecoration: "none" }}>🔍 Search</Link>
+          <Link href="/search" style={{ color: "#aaa", textDecoration: "none" }}>Search</Link>
           {user ? (
             <>
-              <span style={{ color: "#888" }}>👋 <b style={{ color: "#e8e8f0" }}>{user.displayName}</b></span>
-              {user.role === "ADMIN" && <Link href="/admin" style={{ color: "#f7a76c", textDecoration: "none" }}>⚙ Admin</Link>}
+              <span style={{ color: "#888" }}><b style={{ color: "#e8e8f0" }}>{user.displayName}</b></span>
+              {user.role === "ADMIN" && <Link href="/admin" style={{ color: "#f7a76c", textDecoration: "none" }}>Admin</Link>}
               <button onClick={async () => { await fetch("/api/auth/logout", { method: "POST", credentials: "include" }); location.reload(); }}
                 style={{ background: "none", border: "1px solid #444", color: "#aaa", padding: "4px 12px", borderRadius: 6, cursor: "pointer" }}>
                 Logout
@@ -127,7 +127,6 @@ export default function Home() {
           <p style={{ color: "#555", textAlign: "center", padding: 40 }}>Loading channels...</p>
         ) : channels.length === 0 ? (
           <div style={{ textAlign: "center", padding: 60, color: "#555" }}>
-            <div style={{ fontSize: 48 }}>📭</div>
             <p>No channels yet. Be the first to create one!</p>
           </div>
         ) : (

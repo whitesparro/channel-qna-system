@@ -87,8 +87,8 @@ export default function AdminPage() {
   return (
     <div style={S.page}>
       <nav style={S.nav}>
-        <Link href="/" style={{ color: "#7c6af7", textDecoration: "none", fontWeight: 700 }}>📡 Channel Q&A</Link>
-        <span style={{ color: "#555" }}>/ <span style={{ color: "#f7a76c" }}>⚙ Admin Panel</span></span>
+        <Link href="/" style={{ color: "#7c6af7", textDecoration: "none", fontWeight: 700 }}>Channel Q&A</Link>
+        <span style={{ color: "#555" }}>/ <span style={{ color: "#f7a76c" }}>Admin Panel</span></span>
       </nav>
 
       <div style={S.container}>
@@ -98,7 +98,7 @@ export default function AdminPage() {
         {error && (
           <div style={{ background: "#3a1515", border: "1px solid #c33", borderRadius: 8, padding: "12px 16px", marginBottom: 20, color: "#faa" }}>
             {error}
-            <button onClick={() => setError("")} style={{ background: "none", border: "none", color: "#faa", cursor: "pointer", marginLeft: 10 }}>✕</button>
+            <button onClick={() => setError("")} style={{ background: "none", border: "none", color: "#faa", cursor: "pointer", marginLeft: 10 }}>x</button>
           </div>
         )}
 

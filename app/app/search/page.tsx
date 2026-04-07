@@ -8,12 +8,12 @@ type Reply = { id: number; body: string; author?: { displayName: string }; post?
 type UserStat = { id: number; displayName: string; _count: { posts: number } };
 
 const TYPES = [
-  { value: "content", label: "🔍 Search Content" },
-  { value: "author", label: "👤 By Author" },
-  { value: "most", label: "🏆 Most Active Users" },
-  { value: "least", label: "📉 Least Active Users" },
-  { value: "top", label: "⬆ Highest Rated Posts" },
-  { value: "bottom", label: "⬇ Lowest Rated Posts" },
+  { value: "content", label: "Search Content" },
+  { value: "author", label: "By Author" },
+  { value: "most", label: "Most Active Users" },
+  { value: "least", label: "Least Active Users" },
+  { value: "top", label: "Highest Rated Posts" },
+  { value: "bottom", label: "Lowest Rated Posts" },
 ];
 
 const S: Record<string, React.CSSProperties> = {
@@ -48,7 +48,7 @@ export default function SearchPage() {
   return (
     <div style={S.page}>
       <nav style={S.nav}>
-        <Link href="/" style={{ color: "#7c6af7", textDecoration: "none", fontWeight: 700 }}>📡 Channel Q&A</Link>
+        <Link href="/" style={{ color: "#7c6af7", textDecoration: "none", fontWeight: 700 }}>Channel Q&A</Link>
         <span style={{ color: "#555" }}>/ Search</span>
       </nav>
 
@@ -151,7 +151,6 @@ export default function SearchPage() {
 
         {!results && !loading && (
           <div style={{ textAlign: "center", padding: "60px 0", color: "#444" }}>
-            <div style={{ fontSize: 48 }}>🔍</div>
             <p>Select a search type and enter a query to get started.</p>
           </div>
         )}

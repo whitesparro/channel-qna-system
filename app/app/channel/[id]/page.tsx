@@ -225,14 +225,14 @@ export default function ChannelPage() {
     <div style={S.page}>
       <nav style={S.nav}>
         <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
-          <Link href="/" style={{ color: "#7c6af7", textDecoration: "none", fontWeight: 700 }}>📡 Channel Q&A</Link>
+          <Link href="/" style={{ color: "#7c6af7", textDecoration: "none", fontWeight: 700 }}>Channel Q&A</Link>
           {channel && <span style={{ color: "#555" }}>/ <span style={{ color: "#ddd" }}>#{channel.name}</span></span>}
         </div>
         <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-          <Link href="/search" style={{ color: "#aaa", textDecoration: "none", fontSize: 14 }}>🔍 Search</Link>
+          <Link href="/search" style={{ color: "#aaa", textDecoration: "none", fontSize: 14 }}>Search</Link>
           {user ? (
             <>
-              <span style={{ color: "#888", fontSize: 14 }}>👋 <b style={{ color: "#e8e8f0" }}>{user.displayName}</b> {user.role === "ADMIN" && <span style={{ color: "#f7a76c", fontSize: 12 }}>[ADMIN]</span>}</span>
+              <span style={{ color: "#888", fontSize: 14 }}><b style={{ color: "#e8e8f0" }}>{user.displayName}</b> {user.role === "ADMIN" && <span style={{ color: "#f7a76c", fontSize: 12 }}>[ADMIN]</span>}</span>
               <button onClick={async () => { await fetch("/api/auth/logout", { method: "POST", credentials: "include" }); location.reload(); }}
                 style={{ ...S.btnSm }}>Logout</button>
             </>
@@ -276,7 +276,6 @@ export default function ChannelPage() {
           <p style={{ color: "#555", textAlign: "center", padding: 40 }}>Loading posts...</p>
         ) : posts.length === 0 ? (
           <div style={{ textAlign: "center", padding: 60, color: "#555" }}>
-            <div style={{ fontSize: 48 }}>💬</div>
             <p>No posts yet. Be the first to ask a question!</p>
           </div>
         ) : (
@@ -324,9 +323,9 @@ export default function ChannelPage() {
                   <div style={{ marginTop: 14, borderTop: "1px solid #222", paddingTop: 14 }}>
                     {replyTarget[post.id] && (
                       <div style={{ fontSize: 12, color: "#888", marginBottom: 6 }}>
-                        ↩ Replying to reply #{replyTarget[post.id]}
+                        Replying to reply #{replyTarget[post.id]}
                         <button onClick={() => setReplyTarget((p) => ({ ...p, [post.id]: null }))}
-                          style={{ background: "none", border: "none", color: "#f87", cursor: "pointer", marginLeft: 6 }}>✕</button>
+                          style={{ background: "none", border: "none", color: "#f87", cursor: "pointer", marginLeft: 6 }}>x</button>
                       </div>
                     )}
                     <div style={{ display: "flex", gap: 8 }}>

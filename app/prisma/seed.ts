@@ -73,7 +73,7 @@ async function main() {
   await prisma.vote.create({ data: { userId: admin.id, postId: post3.id, value: 1 } });
   await prisma.vote.create({ data: { userId: alice.id, replyId: reply1.id, value: 1 } });
 
-  console.log("✅ Seed complete. Admin: admin/admin123 | Users: alice/password123, bob/password123");
+  console.log("Seed complete. Admin: admin/admin123 | Users: alice/password123, bob/password123");
 }
 
 main().catch((e) => { console.error(e); process.exit(1); }).finally(() => prisma.$disconnect());
